@@ -33,7 +33,7 @@ app.use(express.json({ limit: "10mb" }));
 async function htmlToPdf(htmlString) {
   const browser = await puppeteer.launch({
     headless: "new",
-    executablePath: await chromium.path,
+    executablePath: chromium.path,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
@@ -41,6 +41,7 @@ async function htmlToPdf(htmlString) {
       "--disable-gpu",
       "--disable-software-rasterizer",
     ],
+    timeout: 0,
   });
 
   const page = await browser.newPage();
@@ -53,7 +54,7 @@ async function htmlToPdf(htmlString) {
     format: "A4",
     printBackground: true,
     omitBackground: true,
-    margin: { top: 10, right: 10, bottom: 10, left: 10 },
+    margin: { top: 20, right: 20, bottom: 20, left: 20 },
   });
 
   await browser.close();
