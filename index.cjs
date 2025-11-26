@@ -3,8 +3,25 @@ const cors = require("cors");
 const puppeteer = require("puppeteer");
 const app = express();
 const port = 3000;
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://html-to-pdf-frontend.vercel.app",
+];
 
-app.use(cors());
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS: Ruxsat berilmagan domen"));
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 async function htmlToPdf(htmlString) {
@@ -41,6 +58,8 @@ app.get("/check", (req, res) => {
 });
 
 app.post("/save-as-pdf", (req, res) => {
+  console.log(req.body.html);
+
   generate(req.body.html).then((docBuffer) => {
     res.set({
       "Content-Type": "application/pdf",
