@@ -3,6 +3,8 @@ const cors = require("cors");
 const puppeteer = require("puppeteer");
 const app = express();
 const port = 3000;
+
+// ------------ CORS CONFIG (100% WORKS) ------------
 const allowedOrigins = [
   "http://localhost:5173",
   "https://html-to-pdf-frontend.vercel.app",
@@ -11,19 +13,23 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS: Ruxsat berilmagan domen"));
-      }
+      if (!origin) return callback(null, true); // Postman/Server requests
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("CORS: Ruxsat berilmagan domen"));
     },
-    credentials: true,
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
   })
 );
-app.use(express.json());
 
+// Preflight fix (very important!)
+app.options(/.*/, cors());
+
+// Body parser
+app.use(express.json({ limit: "10mb" }));
+// ----------------------------------------------------
+
+// ------------ Puppeteer Function ------------
 async function htmlToPdf(htmlString) {
   const browser = await puppeteer.launch({
     headless: "new",
@@ -32,7 +38,6 @@ async function htmlToPdf(htmlString) {
 
   const page = await browser.newPage();
 
-  // HTML yoki file
   await page.setContent(htmlString, {
     waitUntil: "networkidle0",
   });
@@ -45,31 +50,38 @@ async function htmlToPdf(htmlString) {
   });
 
   await browser.close();
-
   return pdfBuffer;
 }
+// ----------------------------------------------------
 
-async function generate(htmlString) {
-  return await htmlToPdf(htmlString);
-}
-
+// ------------ Routes ------------
 app.get("/check", (req, res) => {
   res.send("Work 🚀");
 });
 
-app.post("/save-as-pdf", (req, res) => {
-  console.log(req.body.html);
+app.post("/save-as-pdf", async (req, res) => {
+  try {
+    const html = req.body.html;
+    if (!html) {
+      return res.status(400).json({ error: "HTML topilmadi" });
+    }
 
-  generate(req.body.html).then((docBuffer) => {
+    const pdfBuffer = await htmlToPdf(html);
+
     res.set({
       "Content-Type": "application/pdf",
-      "Content-Disposition": "attachment; filename=example.pdf",
-      "Content-Length": docBuffer.length,
+      "Content-Disposition": "attachment; filename=generated.pdf",
+      "Content-Length": pdfBuffer.length,
     });
-    res.end(docBuffer);
-  });
+
+    return res.end(pdfBuffer);
+  } catch (err) {
+    console.error("PDF yaratishda xato:", err);
+    res.status(500).json({ error: "Serverda xato yuz berdi" });
+  }
 });
+// ----------------------------------------------------
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`Server ${port} portida ishlayapti`);
 });
