@@ -4,7 +4,7 @@ const puppeteer = require("puppeteer");
 const app = express();
 const port = 3000;
 
-// ------------ CORS CONFIG (100% WORKS) ------------
+// ------------ CORS CONFIG ------------
 const allowedOrigins = [
   "http://localhost:5173",
   "https://html-to-pdf-frontend.vercel.app",
@@ -13,7 +13,7 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // Postman/Server requests
+      if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
       return callback(new Error("CORS: Ruxsat berilmagan domen"));
     },
@@ -22,18 +22,24 @@ app.use(
   })
 );
 
-// Preflight fix (very important!)
+// Express 5 uchun to'g'ri preflight
 app.options(/.*/, cors());
 
-// Body parser
 app.use(express.json({ limit: "10mb" }));
 // ----------------------------------------------------
 
-// ------------ Puppeteer Function ------------
+// ------------ Puppeteer Function (Render-friendly) ------------
 async function htmlToPdf(htmlString) {
   const browser = await puppeteer.launch({
     headless: "new",
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    executablePath: await puppeteer.executablePath(), // 🔥 MUHIM FIX
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--disable-software-rasterizer",
+    ],
   });
 
   const page = await browser.newPage();
