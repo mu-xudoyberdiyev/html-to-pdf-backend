@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const chromium = require("chromium");
 const puppeteer = require("puppeteer");
 const app = express();
 const port = 3000;
@@ -32,7 +33,7 @@ app.use(express.json({ limit: "10mb" }));
 async function htmlToPdf(htmlString) {
   const browser = await puppeteer.launch({
     headless: "new",
-    executablePath: await puppeteer.executablePath(), // 🔥 MUHIM FIX
+    executablePath: await chromium.path,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
