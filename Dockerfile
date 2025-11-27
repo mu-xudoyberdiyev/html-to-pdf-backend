@@ -8,7 +8,7 @@ WORKDIR /
 COPY package*.json ./
 
 # Kutubxonalarni o‘rnatamiz
-RUN npm install --production
+RUN npm install --omit=dev
 
 # Barcha kodni ko‘chirib olamiz
 COPY . .
