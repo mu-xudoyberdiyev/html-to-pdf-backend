@@ -1,5 +1,6 @@
 # Playwright + Chromium oldindan o‘rnatilgan rasm
-FROM mcr.microsoft.com/playwright:v1.46.0-focal
+FROM mcr.microsoft.com/playwright:v1.57.0-jammy
+
 
 # Ishchi papka
 WORKDIR /
