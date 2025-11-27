@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const chromium = require("chromium");
-const puppeteer = require("puppeteer");
+const { chromium } = require("playwright");
 const app = express();
 const port = 3000;
 
@@ -23,56 +22,69 @@ app.use(
   })
 );
 
-// Express 5 uchun to'g'ri preflight
 app.options(/.*/, cors());
-
 app.use(express.json({ limit: "10mb" }));
-// ----------------------------------------------------
 
-// ------------ Puppeteer Function (Render-friendly) ------------
+// ----------------------------------------------------
+//  🔥 Render-friendly Playwright PDF Generator
+// ----------------------------------------------------
 async function htmlToPdf(htmlString) {
-  const browser = await puppeteer.launch({
-    headless: "new",
-    executablePath: chromium.path,
+  const browser = await chromium.launch({
+    headless: true,
+    timeout: 0,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
       "--disable-gpu",
       "--disable-software-rasterizer",
+      "--single-process",
+      "--no-zygote",
+      "--disable-background-networking",
+      "--disable-background-timer-throttling",
+      "--disable-breakpad",
+      "--disable-client-side-phishing-detection",
+      "--disable-default-apps",
+      "--disable-hang-monitor",
+      "--disable-popup-blocking",
+      "--metrics-recording-only",
+      "--mute-audio",
     ],
-    timeout: 0,
   });
 
   const page = await browser.newPage();
 
+  // Render serverlarida kechikishni kamaytirish uchun timeout o‘rnatiladi
+  await page.setDefaultNavigationTimeout(0);
+  await page.setDefaultTimeout(0);
+
   await page.setContent(htmlString, {
-    waitUntil: "networkidle0",
+    waitUntil: "domcontentloaded", // networkidle renderda ba'zan timeout beradi
   });
 
   const pdfBuffer = await page.pdf({
     format: "A4",
     printBackground: true,
-    omitBackground: true,
-    margin: { top: 20, right: 20, bottom: 20, left: 20 },
+    preferCSSPageSize: true,
+    margin: { top: "20px", bottom: "20px", left: "20px", right: "20px" },
   });
 
   await browser.close();
   return pdfBuffer;
 }
+
+// ----------------------------------------------------
+// ------------------------ Routes ------------------------
 // ----------------------------------------------------
 
-// ------------ Routes ------------
 app.get("/check", (req, res) => {
-  res.send("Work 🚀");
+  res.send("Work 🚀 (Render version)");
 });
 
 app.post("/save-as-pdf", async (req, res) => {
   try {
     const html = req.body.html;
-    if (!html) {
-      return res.status(400).json({ error: "HTML topilmadi" });
-    }
+    if (!html) return res.status(400).json({ error: "HTML topilmadi" });
 
     const pdfBuffer = await htmlToPdf(html);
 
@@ -88,8 +100,9 @@ app.post("/save-as-pdf", async (req, res) => {
     res.status(500).json({ error: "Serverda xato yuz berdi" });
   }
 });
+
 // ----------------------------------------------------
 
 app.listen(port, () => {
-  console.log(`Server ${port} portida ishlayapti`);
+  console.log(`Server ${port} portida Render muhitida ishlayapti 🚀`);
 });
