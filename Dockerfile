@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/playwright:v1.46.0-focal
 
 # Ishchi papka
-WORKDIR /app
+WORKDIR /
 
 # Package.json fayllarni ko‘chirib olamiz
 COPY package*.json ./
@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 3000
 
 # Serverni ishga tushiramiz
-CMD ["node", "index.js"]
+CMD ["node", "index.cjs"]
