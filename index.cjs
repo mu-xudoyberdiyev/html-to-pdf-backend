@@ -8,6 +8,7 @@ const port = 3000;
 const allowedOrigins = [
   "http://localhost:5173",
   "https://html-to-pdf-frontend.vercel.app",
+  "https://html-to-pdf-frontend.netlify.app",
 ];
 
 app.use(
@@ -54,19 +55,20 @@ async function htmlToPdf(htmlString) {
 
   const page = await browser.newPage();
 
-  // Render serverlarida kechikishni kamaytirish uchun timeout o‘rnatiladi
-  await page.setDefaultNavigationTimeout(0);
-  await page.setDefaultTimeout(0);
+  await page.setViewportSize({ width: 794, height: 1123 });
+
+  page.setDefaultNavigationTimeout(0);
+  page.setDefaultTimeout(0);
 
   await page.setContent(htmlString, {
-    waitUntil: "domcontentloaded", // networkidle renderda ba'zan timeout beradi
+    waitUntil: "networkidle",
   });
 
   const pdfBuffer = await page.pdf({
     format: "A4",
     printBackground: true,
     preferCSSPageSize: true,
-    margin: { top: "20px", bottom: "20px", left: "20px", right: "20px" },
+    margin: { top: "0", bottom: "0", left: "0", right: "0" },
   });
 
   await browser.close();
@@ -104,5 +106,5 @@ app.post("/save-as-pdf", async (req, res) => {
 // ----------------------------------------------------
 
 app.listen(port, () => {
-  console.log(`Server ${port} portida Render muhitida ishlayapti 🚀`);
+  console.log(`Server ${port} portida ishlayapti 🚀`);
 });
